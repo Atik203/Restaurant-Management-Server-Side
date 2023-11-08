@@ -33,6 +33,9 @@ async function run() {
     // await client.connect();
 
     const foodCollection = client.db("RestaurantManage").collection("Foods");
+    const orderedCollection = client
+      .db("RestaurantManage")
+      .collection("OrderedDb");
 
     app.get("/foods", async (req, res) => {
       try {
@@ -66,6 +69,18 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+      }
+    });
+    app.post("/orderedFoods", async (req, res) => {
+      try {
+        const orderedData = req.body.orderedData;
+
+        const result = await orderedCollection.insertOne(orderedData);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+
+        res.status(500).json({ error: "Internal server error" });
       }
     });
 
