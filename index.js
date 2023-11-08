@@ -33,6 +33,7 @@ async function run() {
     // await client.connect();
 
     const foodCollection = client.db("RestaurantManage").collection("Foods");
+    const userCollection = client.db("RestaurantManage").collection("users");
     const orderedCollection = client
       .db("RestaurantManage")
       .collection("OrderedDb");
@@ -76,7 +77,7 @@ async function run() {
         const { updatedData } = req.body;
         const id = req.params.id;
         const filter = { _id: new ObjectId(id) };
-        console.log(updatedData);
+
         console.log(updatedData.count, updatedData.quantity);
         const updatedDoc = {
           $set: {
@@ -90,6 +91,33 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+      }
+    });
+
+    app.get("/bestSell", async (req, res) => {
+      try {
+        const options = {
+          sort: { count: -1 },
+          limit: 6,
+        };
+        const result = await foodCollection.find({}, options).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/users", async (req, res) => {
+      try {
+        const userData = req.body?.userData;
+        console.log(userData);
+        const result = await userCollection.insertOne(userData);
+        res.send(result);
+        console.log(result);
+      } catch (error) {
+        console.log(error);
+
+        res.status(500).json({ error: "Internal server error" });
       }
     });
 
