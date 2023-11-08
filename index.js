@@ -31,7 +31,31 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
-    // Send a ping to confirm a successful connection
+
+    const foodCollection = client.db("RestaurantManage").collection("Foods");
+
+    app.get("/foods", async (req, res) => {
+      try {
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        console.log(size, page);
+        const result = await foodCollection
+          .find()
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/foodsCount", async (req, res) => {
+      try {
+        const count = await foodCollection.estimatedDocumentCount();
+        res.send({ count });
+      } catch (error) {}
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
