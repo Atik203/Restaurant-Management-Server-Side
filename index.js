@@ -71,6 +71,28 @@ async function run() {
         console.log(error);
       }
     });
+    app.patch("/foods/:id", async (req, res) => {
+      try {
+        const { updatedData } = req.body;
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        console.log(updatedData);
+        console.log(updatedData.count, updatedData.quantity);
+        const updatedDoc = {
+          $set: {
+            count: updatedData.count,
+            quantity: updatedData.quantity,
+          },
+        };
+
+        const result = await foodCollection.updateOne(filter, updatedDoc);
+
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
     app.post("/orderedFoods", async (req, res) => {
       try {
         const orderedData = req.body.orderedData;
