@@ -38,7 +38,7 @@ async function run() {
       try {
         const page = parseInt(req.query.page);
         const size = parseInt(req.query.size);
-        console.log(size, page);
+
         const result = await foodCollection
           .find()
           .skip(page * size)
@@ -55,6 +55,54 @@ async function run() {
         const count = await foodCollection.estimatedDocumentCount();
         res.send({ count });
       } catch (error) {}
+    });
+
+    app.get("/searchFoods", async (req, res) => {
+      try {
+        const query = req.query.q;
+        const result = await foodCollection
+          .find({ name: { $regex: query, $options: "i" } })
+          .toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/filterFoods", async (req, res) => {
+      try {
+        const filterType = req.query.filterType;
+        let sortCriteria = {};
+
+        if (filterType === "lowToHigh") {
+          sortCriteria = { price: 1 };
+        } else if (filterType === "highToLow") {
+          sortCriteria = { price: -1 };
+        }
+
+        const result = await foodCollection.find().sort(sortCriteria).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.get("/SingleFood/:id", async (req, res) => {
+      const foodId = req.params.id;
+
+      try {
+        const foodItem = await foodCollection.findOne({
+          _id: new ObjectId(foodId),
+        });
+        if (foodItem) {
+          res.json(foodItem);
+        } else {
+          res.status(404).json({ error: "Food item not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
