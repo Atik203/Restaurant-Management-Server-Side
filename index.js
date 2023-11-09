@@ -27,6 +27,21 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).send({ message: "not authorized" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "not authorized" });
+    }
+    req.user = decoded;
+  });
+  next();
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -37,6 +52,26 @@ async function run() {
     const orderedCollection = client
       .db("RestaurantManage")
       .collection("OrderedDb");
+
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1hr",
+      });
+
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .send({ success: true });
+    });
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
 
     app.get("/foods", async (req, res) => {
       try {
@@ -52,6 +87,27 @@ async function run() {
       } catch (error) {
         console.log(error);
       }
+    });
+
+    app.get("/orders", verifyToken, async (req, res) => {
+      if (req.query?.email !== req.user?.email) {
+        return res.status(403).send({ message: "forbidden" });
+      }
+
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+
+      const result = await orderedCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await orderedCollection.deleteOne(query);
+      res.send(result);
     });
 
     app.get("/foodsCount", async (req, res) => {
@@ -75,10 +131,12 @@ async function run() {
     app.patch("/foods/:id", async (req, res) => {
       try {
         const { updatedData } = req.body;
-        const id = req.params.id;
+        const id = req.params?.id;
+        if (!id) {
+          return res.status(400).json({ error: "Food item id is missing" });
+        }
         const filter = { _id: new ObjectId(id) };
 
-        console.log(updatedData.count, updatedData.quantity);
         const updatedDoc = {
           $set: {
             count: updatedData.count,
@@ -110,10 +168,22 @@ async function run() {
     app.post("/users", async (req, res) => {
       try {
         const userData = req.body?.userData;
-        console.log(userData);
+
         const result = await userCollection.insertOne(userData);
         res.send(result);
-        console.log(result);
+      } catch (error) {
+        console.log(error);
+
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.post("/foods", async (req, res) => {
+      try {
+        const newFood = req.body?.newFood;
+
+        const result = await foodCollection.insertOne(newFood);
+        res.send(result);
       } catch (error) {
         console.log(error);
 
