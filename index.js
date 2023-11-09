@@ -46,7 +46,9 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
-
+    const aboutUsCollection = client
+      .db("RestaurantManage")
+      .collection("aboutUs");
     const foodCollection = client.db("RestaurantManage").collection("Foods");
     const reviewCollection = client
       .db("RestaurantManage")
@@ -78,6 +80,11 @@ async function run() {
 
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/AboutUs", async (req, res) => {
+      const result = await aboutUsCollection.find().toArray();
       res.send(result);
     });
 
