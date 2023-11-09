@@ -48,6 +48,9 @@ async function run() {
     // await client.connect();
 
     const foodCollection = client.db("RestaurantManage").collection("Foods");
+    const reviewCollection = client
+      .db("RestaurantManage")
+      .collection("reviews");
     const userCollection = client.db("RestaurantManage").collection("users");
     const orderedCollection = client
       .db("RestaurantManage")
@@ -71,6 +74,11 @@ async function run() {
       const user = req.body;
 
       res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
+
+    app.get("/review", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
     });
 
     app.get("/foods", async (req, res) => {
