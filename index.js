@@ -103,6 +103,20 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/addedFoods", verifyToken, async (req, res) => {
+      if (req.query?.email !== req.user?.email) {
+        return res.status(403).send({ message: "forbidden" });
+      }
+
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+
+      const result = await foodCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.delete("/orders/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
