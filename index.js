@@ -165,6 +165,36 @@ async function run() {
         console.log(error);
       }
     });
+    app.patch("/updateFood/:id", async (req, res) => {
+      try {
+        const foodId = req.params.id;
+        const { newFood } = req.body;
+
+        const filter = { _id: new ObjectId(foodId) };
+        const update = {
+          $set: {
+            name: newFood.name,
+            origin: newFood.origin,
+            category: newFood.category,
+            quantity: newFood.quantity,
+            description: newFood.description,
+            price: newFood.price,
+            ingredients: newFood.ingredients,
+            img: newFood.img,
+            madeBy: newFood.madeBy,
+            email: newFood.email,
+            count: newFood.count,
+          },
+        };
+
+        const result = await foodCollection.updateOne(filter, update);
+
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
 
     app.get("/bestSell", async (req, res) => {
       try {
